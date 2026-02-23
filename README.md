@@ -1,6 +1,3 @@
-# qa-oe-inspiration-tacianaluz
-Practical solution for the OE Inspiration Hands-On practice, demonstrating automated E2E testing using Playwright and Page Object Model (POM) on SauceDemo.
-
 # OE Inspiration - Hands-On Practice 🚀
 
 This repository contains the practical solution for the **Operational Excellence (OE)** training. The goal is to demonstrate the application of modern automation concepts, ensuring quality, maintainability, and efficiency.
