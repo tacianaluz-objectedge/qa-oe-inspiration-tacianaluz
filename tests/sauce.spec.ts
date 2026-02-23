@@ -66,7 +66,7 @@ test.describe('SauceDemo Suite', () => {
             expect(numericPrices[i], `Price ${numericPrices[i]} must be <= to the next price ${numericPrices[i+1]}`)
             .toBeLessThanOrEqual(numericPrices[i + 1]);
         }
-   });
+    });
 
     test('TC2: End-to-End Flow - Multi-Item Purchase and Calculation Verification', async ({ page }) => {
         const items = [
@@ -106,7 +106,7 @@ test.describe('SauceDemo Suite', () => {
         await expect(page.locator('.complete-header')).toHaveText('Thank you for your order!');
         await expect(page.locator('.pony_express')).toBeVisible();
         await expect(badge).not.toBeVisible();
-});
+ });
 
     test('TC3: Data Integrity - Cart Persistence & Removal Lifecycle', async ({ page }) => {
       await page.click('[data-test="add-to-cart-sauce-labs-backpack"]');
@@ -127,18 +127,11 @@ test.describe('SauceDemo Suite', () => {
             { id: 'backpack', name: 'Sauce Labs Backpack' },
             { id: 'bolt-t-shirt', name: 'Sauce Labs Bolt T-Shirt' }
         ];
-
         const capturedInventory: { name: string, price: number }[] = [];
-
-        // 1. Capture and Validate individual prices from the inventory page
         for (const item of productSelectors) {
             const productLocator = page.locator('.inventory_item').filter({ hasText: item.name });
-            
-            // Extract price from UI
             const priceText = await productLocator.locator('.inventory_item_price').innerText();
             const priceValue = parseFloat(priceText.replace('$', ''));
-            
-            // OE Validation: Ensure the price is a valid positive number
             expect(priceValue, `Price for ${item.name} should be a positive number`).toBeGreaterThan(0);
             
             capturedInventory.push({ name: item.name, price: priceValue });
@@ -147,45 +140,30 @@ test.describe('SauceDemo Suite', () => {
 
         await page.click('.shopping_cart_link');
         await page.click('[data-test="checkout"]');
-
         await page.fill('[data-test="firstName"]', 'Taciana');
         await page.fill('[data-test="lastName"]', 'Luz');
         await page.fill('[data-test="postalCode"]', '12345');
         await page.click('[data-test="continue"]');
 
-        // 2. STRICT VALIDATION: Verify EVERY individual price in the summary matches the showcase
         for (const item of capturedInventory) {
             const summaryItem = page.locator('.cart_item').filter({ hasText: item.name });
             const summaryPriceText = await summaryItem.locator('.inventory_item_price').innerText();
             const summaryPriceValue = parseFloat(summaryPriceText.replace('$', ''));
-
-            // OE Check: Integrity between inventory page and checkout overview
             expect(summaryPriceValue, `Price for ${item.name} in summary must match initial showcase price`).toBe(item.price);
         }
 
-        // 3. Extract Finance Values from the Final UI
         const subtotalText = await page.locator('.summary_subtotal_label').innerText();
         const taxText = await page.locator('.summary_tax_label').innerText();
         const totalText = await page.locator('.summary_total_label').innerText();
-
         const subtotalUI = parseFloat(subtotalText.replace('Item total: $', ''));
         const taxUI = parseFloat(taxText.replace('Tax: $', ''));
         const totalUI = parseFloat(totalText.replace('Total: $', ''));
-
-        // 4. Mathematical Audit Logic (Data-Driven Calculation)
         const expectedSubtotal = capturedInventory.reduce((sum, item) => sum + item.price, 0);
-        
-        // OE Validation: Validate Subtotal
         expect(subtotalUI, 'Subtotal in UI must strictly match the sum of individual captured prices').toBe(expectedSubtotal);
-        
-        // OE Validation: Validate Tax calculation (approx. 8%)
         const expectedTax = Number((subtotalUI * 0.08).toFixed(2));
         expect(taxUI, 'Tax should be consistent with the application logic (~8%)').toBeCloseTo(expectedTax, 1);
-        
-        // OE Validation: Final Sum (Subtotal + Tax = Total)
         const calculatedTotal = Number((subtotalUI + taxUI).toFixed(2));
         expect(totalUI, `Final Total (${totalUI}) must be exactly Subtotal (${subtotalUI}) + Tax (${taxUI})`).toBe(calculatedTotal);
-
         await page.click('[data-test="finish"]');
         await expect(page.locator('.complete-header')).toHaveText('Thank you for your order!');
         });
